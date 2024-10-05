@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Generate Keys{% endblock %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0"><i class="fas fa-key me-2"></i>Generate Keys</h2>
+    </div>
+    <div class="card-body">
+        <button id="generateBtn" class="btn btn-primary btn-lg"><i class="fas fa-sync-alt me-2"></i>Generate New Keys</button>
+    </div>
+</div>
+
+<div id="keyResult" class="mt-4"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('generateBtn').addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Generating...';
+
+        fetch('{% url "generate_keys" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('keyResult').innerHTML = `
+                <div class="card shadow mt-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0"><i class="fas fa-check-circle me-2"></i>Keys Generated Successfully</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4>Private Key:</h4>
+                        <textarea class="form-control mb-3" rows="3" readonly>${data.private_key}</textarea>
+                        <h4>Public Key:</h4>
+                        <p>X: <textarea class="form-control mb-2" rows="2" readonly>${data.public_key.x}</textarea></p>
+                        <p>Y: <textarea class="form-control" rows="2" readonly>${data.public_key.y}</textarea></p>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('keyResult').innerHTML = `
+                <div class="alert alert-danger mt-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Error: ${error.message}
+                </div>
+            `;
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Generate New Keys';
+        });
+    });
+</script>
+{% endblock %}
