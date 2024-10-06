@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Sign Message{% endblock %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0"><i class="fas fa-pen-fancy me-2"></i>Sign Message</h2>
+    </div>
+    <div class="card-body">
+        <form id="signForm">
+            <div class="mb-3">
+                <label for="privateKey" class="form-label">Private Key:</label>
+                <input type="text" class="form-control" id="privateKey" required>
+            </div>
+            <div class="mb-3">
+                <label for="message" class="form-label">Message:</label>
+                <textarea class="form-control" id="message" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-signature me-2"></i>Sign Message</button>
+        </form>
+    </div>
+</div>
+
+<div id="result" class="mt-4"></div>
+
+<script>
+document.getElementById('signForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    let submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Signing...';
+
+    const formData = new FormData();
+    formData.append('private_key', document.getElementById('privateKey').value);
+    formData.append('message', document.getElementById('message').value);
+
+    fetch('{% url "sign_message" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.signature) {
+            document.getElementById('result').innerHTML = `
+                <div class="card shadow mt-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0"><i class="fas fa-check-circle me-2"></i>Signature Result</h3>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>R:</strong> ${data.signature.r}</p>
+                        <p><strong>S:</strong> ${data.signature.s}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
+    })
+    .catch(error => {
+        document.getElementById('result').innerHTML = `
+            <div class="alert alert-danger mt-4" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>Error: ${error.message}
+            </div>
+        `;
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-signature me-2"></i>Sign Message';
+    });
+});
+</script>
+{% endblock %}
