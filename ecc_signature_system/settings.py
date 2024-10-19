@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -83,10 +84,15 @@ WSGI_APPLICATION = 'ecc_signature_system.wsgi.application'
 # Database configuration for local SQLite (use external DB for production)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.kukkdodvkvnjtnbfinav',
+        'PASSWORD': 'GcR0YYVjmD65SICM',
+        'HOST': 'aws-0-ap-south-1.pooler.supabase.com',
+        'PORT': '6543',
     }
 }
+
 
 # Static and media files configuration
 STATIC_URL = '/static/'  
