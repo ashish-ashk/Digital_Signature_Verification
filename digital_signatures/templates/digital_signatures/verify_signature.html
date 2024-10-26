@@ -27,11 +27,17 @@
                 <label for="signatureS" class="form-label">Signature S:</label>
                 <input type="text" class="form-control" id="signatureS" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-search me-2"></i>Verify Signature</button>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i>Verify Signature
+                </button>
+                <button type="button" class="btn btn-danger btn-lg" id="resetBtn">
+                    <i class="fas fa-undo me-2"></i>Reset
+                </button>
+            </div>
         </form>
     </div>
 </div>
-
 <div id="result" class="mt-4"></div>
 
 <script>
@@ -84,6 +90,11 @@ document.getElementById('verifyForm').addEventListener('submit', function(e) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-search me-2"></i>Verify Signature';
     });
+});
+
+document.getElementById('resetBtn').addEventListener('click', function() {
+    document.getElementById('verifyForm').reset();
+    document.getElementById('result').innerHTML = '';
 });
 </script>
 {% endblock %}
