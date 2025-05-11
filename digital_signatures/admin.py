@@ -1,44 +1,39 @@
 from django.contrib import admin
-from .models import KeyPair, SignatureRecord, VerificationLog, UserActivity
+from .models import KeyPair, SignatureRecord, VerificationLog, UserActivity, DocumentMetadata, SignatureStats, AuditLog
 
 @admin.register(KeyPair)
 class KeyPairAdmin(admin.ModelAdmin):
-    list_display = ('id', 'private_key', 'public_key_x', 'public_key_y', 'created_at')
-    search_fields = ('private_key', 'public_key_x', 'public_key_y')
-    list_filter = ('created_at',)
-    readonly_fields = ('created_at',)
-    
-    # Add custom actions
-    actions = ['make_inactive']
-    
-    # Add fieldsets for better organization
-    fieldsets = (
-        ('Key Information', {
-            'fields': ('private_key', 'public_key_x', 'public_key_y')
-        }),
-        ('Metadata', {
-            'fields': ('created_at',),
-            'classes': ('collapse',)
-        }),
-    )
-
-    def make_inactive(self, request, queryset):
-        queryset.update(is_active=False)
-    make_inactive.short_description = "Mark selected keys as inactive"
+    list_display = ('id', 'public_key_x', 'public_key_y', 'created_at')
+    search_fields = ('public_key_x', 'public_key_y')
 
 @admin.register(SignatureRecord)
 class SignatureRecordAdmin(admin.ModelAdmin):
-    list_display = ('message', 'key_pair', 'timestamp', 'is_valid')
+    list_display = ('id', 'message', 'signature_r', 'signature_s', 'is_valid', 'timestamp')
     list_filter = ('is_valid', 'timestamp')
-    search_fields = ('message',)
 
 @admin.register(VerificationLog)
 class VerificationLogAdmin(admin.ModelAdmin):
-    list_display = ('message', 'verification_result', 'verified_at')
+    list_display = ('id', 'message', 'verification_result', 'verified_at')
     list_filter = ('verification_result', 'verified_at')
-    search_fields = ('message',)
 
 @admin.register(UserActivity)
 class UserActivityAdmin(admin.ModelAdmin):
-    list_display = ('activity_type', 'timestamp', 'success')
+    list_display = ('id', 'activity_type', 'success', 'timestamp')
     list_filter = ('activity_type', 'success', 'timestamp')
+
+@admin.register(DocumentMetadata)
+class DocumentMetadataAdmin(admin.ModelAdmin):
+    list_display = ('file_name', 'file_type', 'file_size', 'upload_date')
+    search_fields = ('file_name', 'hash_value')
+    list_filter = ('file_type', 'upload_date')
+
+@admin.register(SignatureStats)
+class SignatureStatsAdmin(admin.ModelAdmin):
+    list_display = ('date', 'total_signatures', 'successful_verifications', 'failed_verifications')
+    list_filter = ('date',)
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ('action', 'timestamp', 'ip_address', 'status')
+    list_filter = ('action', 'status', 'timestamp')
+    search_fields = ('ip_address', 'user_agent')
