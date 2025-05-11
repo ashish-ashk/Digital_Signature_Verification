@@ -2,8 +2,9 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import KeyPair
+from .models import KeyPair, SignatureRecord, VerificationLog, UserActivity
 from .ecdsa import initialize_curve, ECDSA, Point
+from django.utils import timezone
 
 curve = initialize_curve()
 ecdsa = ECDSA(curve)
@@ -22,6 +23,13 @@ def generate_keys(request):
                 public_key_y=str(public_key.y)
             )
             key_pair.save()
+            
+            # Log the key generation activity
+            UserActivity.objects.create(
+                activity_type='GEN',
+                success=True
+            )
+            
             return JsonResponse({
                 'private_key': str(private_key),
                 'public_key': {
@@ -30,6 +38,11 @@ def generate_keys(request):
                 }
             })
         except Exception as e:
+            UserActivity.objects.create(
+                activity_type='GEN',
+                success=False,
+                error_message=str(e)
+            )
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid method'}, status=405)
 
@@ -47,6 +60,23 @@ def sign_message(request):
         # Your signing logic here
         signature = ecdsa.sign(message, private_key)
         
+        # Save signature record
+        key_pair = KeyPair.objects.get(private_key=private_key)
+        SignatureRecord.objects.create(
+            message=message,
+            signature_r=str(signature[0]),
+            signature_s=str(signature[1]),
+            key_pair=key_pair,
+            is_valid=True,
+            timestamp=timezone.localtime()  # Use localtime instead of now()
+        )
+        
+        # Log signing activity
+        UserActivity.objects.create(
+            activity_type='SIGN',
+            success=True
+        )
+        
         return JsonResponse({
             'signature': {
                 'r': str(signature[0]),
@@ -56,7 +86,13 @@ def sign_message(request):
     except ValueError as e:
         return JsonResponse({'error': f'Invalid input: {str(e)}'}, status=400)
     except Exception as e:
+        UserActivity.objects.create(
+            activity_type='SIGN',
+            success=False,
+            error_message=str(e)
+        )
         return JsonResponse({'error': f'Error signing message: {str(e)}'}, status=500)
+
 @csrf_exempt
 def verify_signature(request):
     if request.method == 'POST':
@@ -70,8 +106,30 @@ def verify_signature(request):
             s = int(data.get('s'))
 
             is_valid = ecdsa.verify(message, (r, s), public_key)
-            return JsonResponse({'valid': is_valid})
+            
+            # Log verification attempt
+            VerificationLog.objects.create(
+                message=message,
+                public_key_x=str(public_key_x),
+                public_key_y=str(public_key_y),
+                signature_r=str(r),
+                signature_s=str(s),
+                verification_result=is_valid
+            )
+            
+            # Log activity
+            UserActivity.objects.create(
+                activity_type='VER',
+                success=True
+            )
+            
+            return JsonResponse({'is_valid': is_valid})
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            UserActivity.objects.create(
+                activity_type='VER',
+                success=False,
+                error_message=str(e)
+            )
+            return JsonResponse({'error': str(e)}, status=500)
     else:
         return render(request, 'digital_signatures/verify_signature.html')

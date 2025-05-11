@@ -35,17 +35,4 @@ This project is a **Digital Signature Verification System** developed using **El
 2. **Timestamping Feature**: Integrate a timestamp to provide a verified time for each signature, improving non-repudiation.
 3. **User Authentication and Access Control**: Add user registration, authentication, and role-based access control for secure multi-user operations.
 
-## How to Run
-
-1. Clone the repository.
-   ```bash
-   git clone https://github.com/Pratham-verma/Digital_Signature_Verification.git
-   cd Digital_Signature_Verification
-   ```
-2. Install dependencies.
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Open the browser and go to `http://127.0.0.1:8000` to access the application.
-
 ---

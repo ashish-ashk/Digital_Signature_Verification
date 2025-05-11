@@ -93,6 +93,9 @@ DATABASES = {
     }
 }
 
+# Change TIME_ZONE to your local timezone
+TIME_ZONE = 'Asia/Kolkata'  # For Indian Standard Time
+USE_TZ = True
 
 # Static and media files configuration
 STATIC_URL = '/static/'  

@@ -1,0 +1,78 @@
+.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Signature Verification</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Digital Signature Verification System</h1>
+
+        <div class="card">
+            <h2>Generate Keys</h2>
+            <form id="generate-keys-form">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Generate New Key Pair</button>
+                </div>
+            </form>
+            <div id="keys-result" class="form-group"></div>
+        </div>
+
+        <div class="card">
+            <h2>Sign Message</h2>
+            <form id="sign-form">
+                <div class="form-group">
+                    <label for="private-key">Private Key:</label>
+                    <input type="text" id="private-key" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message:</label>
+                    <textarea id="message" required></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">Sign Message</button>
+                </div>
+            </form>
+            <div id="signature-result" class="form-group"></div>
+        </div>
+
+        <div class="card">
+            <h2>Verify Signature</h2>
+            <form id="verify-form">
+                <div class="form-group">
+                    <label for="public-key-x">Public Key (X):</label>
+                    <input type="text" id="public-key-x" required>
+                </div>
+                <div class="form-group">
+                    <label for="public-key-y">Public Key (Y):</label>
+                    <input type="text" id="public-key-y" required>
+                </div>
+                <div class="form-group">
+                    <label for="verify-message">Message:</label>
+                    <textarea id="verify-message" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="signature-r">Signature (r):</label>
+                    <input type="text" id="signature-r" required>
+                </div>
+                <div class="form-group">
+                    <label for="signature-s">Signature (s):</label>
+                    <input type="text" id="signature-s" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Verify Signature</button>
+                </div>
+            </form>
+            <div id="verify-result" class="form-group"></div>
+        </div>
+    </div>
+
+    <script>
+        // Your existing JavaScript code here
+    </script>
+</body>
+</html>

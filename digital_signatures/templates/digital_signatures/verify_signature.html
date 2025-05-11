@@ -67,14 +67,14 @@ document.getElementById('verifyForm').addEventListener('submit', function(e) {
     .then(data => {
         document.getElementById('result').innerHTML = `
             <div class="card shadow mt-4">
-                <div class="card-header ${data.valid ? 'bg-success' : 'bg-danger'} text-white">
+                <div class="card-header ${data.is_valid ? 'bg-success' : 'bg-danger'} text-white">
                     <h3 class="mb-0">
-                        <i class="fas ${data.valid ? 'fa-check-circle' : 'fa-times-circle'} me-2"></i>
+                        <i class="fas ${data.is_valid ? 'fa-check-circle' : 'fa-times-circle'} me-2"></i>
                         Verification Result
                     </h3>
                 </div>
                 <div class="card-body">
-                    <p class="lead">${data.valid ? 'Signature is valid!' : 'Signature is invalid.'}</p>
+                    <p class="lead">${data.is_valid ? 'Signature is valid!' : 'Signature is invalid.'}</p>
                 </div>
             </div>
         `;
