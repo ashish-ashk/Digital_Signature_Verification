@@ -146,10 +146,10 @@ def verify_signature(request):
 def sign_document(request):
     try:
         file = request.FILES.get('file')
-        private_key = request.POST.get('private_key')
         message = request.POST.get('message')
+        private_key = request.POST.get('private_key')
         
-        if not all([file, private_key, message]):
+        if not all([file, message, private_key]):
             return JsonResponse({'error': 'Missing required fields'}, status=400)
 
         try:
@@ -159,6 +159,9 @@ def sign_document(request):
             
             # Get public key
             key_pair = KeyPair.objects.get(private_key=str(private_key))
+            
+            # Process image with steganography
+            img = Image.open(file)
             
             # Prepare data to embed
             embed_data = {
@@ -173,7 +176,6 @@ def sign_document(request):
             data_string = json.dumps(embed_data)
             
             # Process image and embed data
-            img = Image.open(file)
             processed_img, encryption_key = Steganography.embed(img, data_string)
             
             # Save to bytes
@@ -184,25 +186,16 @@ def sign_document(request):
             # Store encryption key in session
             request.session['encryption_key'] = encryption_key.hex()
             
-            # Log activity
-            UserActivity.objects.create(
-                activity_type='SIGN',
-                success=True
-            )
-            
             response = HttpResponse(img_byte_array, content_type='image/png')
             response['Content-Disposition'] = f'attachment; filename="signed_{file.name}"'
             return response
             
         except Exception as e:
+            print(f"Error in sign_document: {str(e)}")  # For debugging
             return JsonResponse({'error': str(e)}, status=400)
 
     except Exception as e:
-        UserActivity.objects.create(
-            activity_type='SIGN',
-            success=False,
-            error_message=str(e)
-        )
+        print(f"Outer error in sign_document: {str(e)}")  # For debugging
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -212,14 +205,20 @@ def verify_document(request):
         if not file:
             return JsonResponse({'error': 'No file provided'}, status=400)
 
-        # Get encryption key from session
-        encryption_key = bytes.fromhex(request.session.get('encryption_key', ''))
-        
-        # Extract and decrypt data
-        img = Image.open(file)
-        extracted_data = Steganography.extract(img, encryption_key)
-        
         try:
+            # First try to extract with dummy key to get the actual key
+            img = Image.open(file)
+            dummy_key = bytes([0] * 32)  # 32-byte dummy key
+            try:
+                initial_data = Steganography.extract(img, dummy_key)
+                initial_json = json.loads(initial_data)
+                encryption_key = bytes.fromhex(initial_json.get('encryption_key', ''))
+            except:
+                # If that fails, try session key as fallback
+                encryption_key = bytes.fromhex(request.session.get('encryption_key', ''))
+
+            # Now extract with the actual encryption key
+            extracted_data = Steganography.extract(img, encryption_key)
             data = json.loads(extracted_data)
             
             # Verify the signature
@@ -228,9 +227,7 @@ def verify_document(request):
             signature_s = int(data['signature_s'])
             message = data['message']
 
-            # Check if signature is valid regardless of whether it's forged
             is_valid = ecdsa.verify(message, (signature_r, signature_s), public_key)
-            is_forged = data.get('is_forged', False)
             
             # Log verification
             VerificationLog.objects.create(
@@ -243,18 +240,17 @@ def verify_document(request):
             )
 
             return JsonResponse({
-                'is_valid': is_valid,  # Return actual validity regardless of forge status
+                'is_valid': is_valid,
                 'message': message,
                 'public_key_x': data['public_key_x'],
                 'public_key_y': data['public_key_y'],
                 'signature_r': data['signature_r'],
-                'signature_s': data['signature_s'],
-                'is_forged': is_forged  # Include forge status for informational purposes
+                'signature_s': data['signature_s']
             })
             
-        except json.JSONDecodeError:
+        except Exception as e:
             return JsonResponse({
-                'error': 'Invalid signature data format'
+                'error': 'Invalid signature data or corrupted file'
             }, status=400)
 
     except Exception as e:
@@ -304,3 +300,6 @@ def forge_document(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+def user_interface(request):
+    return render(request, 'digital_signatures/user_interface.html')

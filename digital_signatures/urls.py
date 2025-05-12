@@ -9,4 +9,5 @@ urlpatterns = [
     path('sign-document/', views.sign_document, name='sign_document'),
     path('verify-document/', views.verify_document, name='verify_document'),
     path('forge-document/', views.forge_document, name='forge_document'),
+    path('user/', views.user_interface, name='user_interface'),
 ]

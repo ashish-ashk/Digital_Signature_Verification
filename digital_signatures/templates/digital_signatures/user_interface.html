@@ -1,0 +1,717 @@
+{% extends 'digital_signatures/base.html' %}
+
+{% block title %}Digital Document Signing Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .upload-area {
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .upload-area:hover {
+        border-color: #3498db;
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+    .upload-icon {
+        font-size: 48px;
+        color: #3498db;
+        margin-bottom: 15px;
+    }
+    .preview-container {
+        max-height: none; /* Remove max-height restriction */
+        overflow: visible; /* Change from hidden to visible */
+        border-radius: 8px;
+        margin-top: 20px;
+        margin-bottom: 20px; /* Add bottom margin for spacing */
+    }
+    .preview-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+    .result-message {
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+    .verification-result {
+        transition: all 0.3s;
+    }
+    /* Add to your existing styles */
+    .input-group .btn-outline-secondary {
+        border-color: #ced4da;
+    }
+
+    .input-group .btn-outline-secondary:hover {
+        background-color: #e9ecef;
+    }
+
+    #locationStatus {
+        font-size: 0.875rem;
+    }
+
+    #locationState.text-success {
+        color: #28a745 !important;
+    }
+
+    #locationState.text-danger {
+        color: #dc3545 !important;
+    }
+
+    /* Add to your existing styles */
+    #detailsContent {
+        transition: all 0.3s ease;
+    }
+
+    #detailsContent .card {
+        border: 1px solid rgba(0,0,0,.125);
+    }
+
+    #extractedMessage {
+        white-space: pre-wrap;
+        font-family: monospace;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    #viewDetailsBtn {
+        transition: all 0.3s ease;
+    }
+
+    /* Add to your existing styles in the style section */
+    #viewDetailsBtn {
+        display: none;
+        margin-top: 1rem;
+        width: 100%;
+        padding: 0.5rem 1rem;
+    }
+
+    #detailsContent {
+        margin-top: 1rem;
+    }
+
+    /* Add to your existing styles */
+    .watermark-text {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.7);
+        background: rgba(255, 255, 255, 0.8);
+        padding: 4px 8px;
+        border-radius: 3px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    #toggleLocation {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    #locationStatus {
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        background-color: rgba(0,0,0,0.03);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h1 class="display-4">Digital Document Signing Portal</h1>
+    <p class="lead text-muted">Securely sign and verify your documents with digital signatures and image steganography</p>
+    <hr class="my-4">
+</div>
+
+<div class="row g-4">
+    <!-- Sign Document Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-file-signature me-2"></i>Sign Document</h3>
+            </div>
+            <div class="card-body">
+                <form id="userSignForm">
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h4>Drag & Drop or Click to Upload</h4>
+                        <p class="text-muted">Supported formats: JPG, JPEG, PNG</p>
+                        <input type="file" id="fileUpload" class="d-none" accept=".jpg,.jpeg,.png">
+                    </div>
+                    <div id="filePreview" class="preview-container" style="display: none;">
+                        <img id="imagePreview" class="img-fluid rounded" alt="Preview" style="max-width: 100%; height: auto;">
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <label for="message" class="form-label">Enter Message:</label>
+                        <div class="input-group">
+                            <textarea class="form-control" id="message" rows="3" required placeholder="Enter your message to be signed"></textarea>
+                            <button class="btn btn-outline-secondary" type="button" id="saveMessageBtn">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                        <div class="form-text">Your saved message will persist across sessions</div>
+                    </div>
+                    <!-- Update the location status div in the sign document form -->
+                    <div class="mb-3">
+                        <div id="locationStatus" class="d-flex align-items-center text-muted justify-content-between">
+                            <div>
+                                <i class="fas fa-location-dot me-2"></i>
+                                <small>Location service: <span id="locationState">Checking...</span></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleLocation">
+                                <i class="fas fa-power-off"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="signBtn">
+                        <i class="fas fa-signature me-2"></i>Sign Document
+                    </button>
+                </form>
+                <div id="signResult" class="result-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify Document Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Verify Document</h3>
+            </div>
+            <div class="card-body">
+                <form id="userVerifyForm">
+                    <div class="upload-area" id="verifyUploadArea">
+                        <i class="fas fa-file-import upload-icon"></i>
+                        <h4>Upload Signed Document</h4>
+                        <p class="text-muted">Upload the signed document to verify</p>
+                        <input type="file" id="verifyFile" class="d-none" accept=".jpg,.jpeg,.png">
+                    </div>
+                    <div id="verifyPreview" class="preview-container" style="display: none;">
+                        <img id="verifyImagePreview" class="img-fluid rounded" alt="Verify Preview">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 mt-3">
+                        <i class="fas fa-check-circle me-2"></i>Verify Document
+                    </button>
+                </form>
+
+                <div id="verifyResult" class="result-message"></div>
+                <!-- Update the button in the Verify Document Section -->
+                <div id="extractedDetails" class="mt-3">
+                    <button type="button" class="btn btn-info" id="viewDetailsBtn" style="display: none;">
+                        <i class="fas fa-info-circle me-2"></i>View Details
+                    </button>
+                    <div id="detailsContent" class="mt-3" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Document Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="fw-bold">Message:</label>
+                                    <p id="extractedMessage" class="mb-0"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add this function at the start of your extra_js block
+function addWatermark(originalImage) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            // Make watermark smaller - reduce from 0.15 to 0.08
+            const size = Math.min(canvas.width, canvas.height) * 0.08; 
+            
+            // Increase right padding from 30 to 50
+            const x = canvas.width - size - 50; 
+            const y = canvas.height - size - 50; // Also increase bottom padding
+            
+            // Draw white background with shadow
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 8; // Reduced shadow blur
+            ctx.beginPath();
+            ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fill();
+            ctx.restore();
+            
+            // Draw circle border
+            ctx.beginPath();
+            ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(41, 128, 185, 0.8)';
+            ctx.lineWidth = 1.5; // Reduced line width
+            ctx.stroke();
+            
+            // Draw checkmark
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.25, y + size * 0.5);
+            ctx.lineTo(x + size * 0.45, y + size * 0.7);
+            ctx.lineTo(x + size * 0.75, y + size * 0.3);
+            ctx.strokeStyle = '#27ae60';
+            ctx.lineWidth = size/12; // Slightly thinner checkmark
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            // Add smaller text
+            const text = 'Digitally Signed';
+            ctx.font = `bold ${size/4.5}px Arial`; // Reduced font size
+            ctx.fillStyle = '#2c3e50';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, x + size/2, y + size + 20); // Reduced spacing below circle
+            
+            canvas.toBlob((blob) => {
+                resolve(blob);
+            }, 'image/png');
+        };
+        img.src = URL.createObjectURL(originalImage);
+    });
+}
+
+// Single setupDragDrop function definition
+function setupDragDrop(uploadAreaId, fileInputId, previewId, imagePreviewId) {
+    const uploadArea = document.getElementById(uploadAreaId);
+    const fileInput = document.getElementById(fileInputId);
+    const preview = document.getElementById(previewId);
+    const imagePreview = document.getElementById(imagePreviewId);
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.add('bg-light');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.remove('bg-light');
+        });
+    });
+
+    uploadArea.addEventListener('drop', handleDrop);
+    fileInput.addEventListener('change', handleChange);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        handleFile(file);
+    }
+
+    function handleChange(e) {
+        const file = e.target.files[0];
+        handleFile(file);
+    }
+
+    function handleFile(file) {
+        if (file) {
+            // Check if it's an image file
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Show error for non-image files
+                alert('Please select an image file (JPG, JPEG, PNG)');
+                fileInput.value = '';
+                preview.style.display = 'none';
+            }
+        }
+    }
+}
+
+// Initialize drag & drop for both sections
+setupDragDrop('uploadArea', 'fileUpload', 'filePreview', 'imagePreview');
+setupDragDrop('verifyUploadArea', 'verifyFile', 'verifyPreview', 'verifyImagePreview');
+
+// Sign Document Form Handler
+document.getElementById('userSignForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const file = document.getElementById('fileUpload').files[0];
+    const messageInput = document.getElementById('message');
+    const signBtn = document.getElementById('signBtn');
+
+    if (!file || !messageInput.value.trim()) {
+        alert('Please select a file and enter a message');
+        return;
+    }
+
+    // Add watermark to the image first
+    const watermarkedImage = await addWatermark(file);
+
+    // Get current date and time formatted
+    const now = new Date();
+    const dateString = now.toLocaleDateString();
+    const timeString = now.toLocaleTimeString();
+
+    // Format the full message with date, time and location in brackets
+    const originalMessage = messageInput.value;
+    const fullMessage = userLocation ? 
+        `${originalMessage}\n\n[Date: ${dateString}] [Time: ${timeString}] [Location: ${userLocation.address}]` :
+        `${originalMessage}\n\n[Date: ${dateString}] [Time: ${timeString}]`;
+
+    // Disable button and show loading state
+    signBtn.disabled = true;
+    signBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+    try {
+        // First generate a new key pair
+        const keyResponse = await fetch('{% url "generate_keys" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        if (!keyResponse.ok) throw new Error('Key generation failed');
+        const keyData = await keyResponse.json();
+
+        // Now sign the document with the generated private key and full message
+        const formData = new FormData();
+        formData.append('file', watermarkedImage); // Use watermarked image instead of original
+        formData.append('message', fullMessage);  // Use the full message with metadata
+        formData.append('private_key', keyData.private_key);
+
+        signBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing Document...';
+
+        const signResponse = await fetch('{% url "sign_document" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        if (!signResponse.ok) throw new Error('Signing failed');
+        
+        signBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Downloading...';
+        
+        // Download the signed document
+        const blob = await signResponse.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'signed_' + file.name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        // Show success message
+        document.getElementById('signResult').innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>Document signed successfully!
+            </div>
+        `;
+
+        // Only clear file input and preview, keep the original message
+        document.getElementById('fileUpload').value = '';
+        document.getElementById('filePreview').style.display = 'none';
+        
+    } catch (error) {
+        document.getElementById('signResult').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>${error.message}
+            </div>
+        `;
+    } finally {
+        // Reset button state
+        signBtn.disabled = false;
+        signBtn.innerHTML = '<i class="fas fa-signature me-2"></i>Sign Document';
+    }
+});
+
+// Verify Document Form Handler
+document.getElementById('userVerifyForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData();
+    const file = document.getElementById('verifyFile').files[0];
+    const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+
+    if (!file) {
+        alert('Please select a file to verify');
+        return;
+    }
+
+    // Reset previous results and hide details
+    document.getElementById('verifyResult').innerHTML = '';
+    viewDetailsBtn.style.display = 'none';
+    document.getElementById('detailsContent').style.display = 'none';
+
+    // Add loading state to button
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('{% url "verify_document" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        // Store the message for later viewing
+        document.getElementById('extractedMessage').textContent = data.message;
+
+        // Show verification result
+        document.getElementById('verifyResult').innerHTML = `
+            <div class="alert ${data.is_valid ? 'alert-success' : 'alert-danger'} mt-3">
+                <i class="fas fa-${data.is_valid ? 'check-circle' : 'times-circle'} me-2"></i>
+                ${data.is_valid ? 'Document signature is valid!' : 'Document signature is invalid!'}
+            </div>
+        `;
+
+        // Show the View Details button only if verification is successful
+        if (data.is_valid) {
+            viewDetailsBtn.style.display = 'block';
+            viewDetailsBtn.classList.add('mt-3'); // Add margin top for spacing
+        }
+
+    } catch (error) {
+        document.getElementById('verifyResult').innerHTML = `
+            <div class="alert alert-danger mt-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>${error.message}
+            </div>
+        `;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Verify Document';
+    }
+});
+
+// Add View Details button handler
+document.getElementById('viewDetailsBtn').addEventListener('click', function() {
+    const detailsContent = document.getElementById('detailsContent');
+    if (detailsContent.style.display === 'none') {
+        detailsContent.style.display = 'block';
+        this.innerHTML = '<i class="fas fa-times-circle me-2"></i>Hide Details';
+    } else {
+        detailsContent.style.display = 'none';
+        this.innerHTML = '<i class="fas fa-info-circle me-2"></i>View Details';
+    }
+});
+
+// Update file change handler to also hide details
+document.getElementById('verifyFile').addEventListener('change', function() {
+    document.getElementById('verifyResult').innerHTML = '';
+    document.getElementById('viewDetailsBtn').style.display = 'none';
+    document.getElementById('detailsContent').style.display = 'none';
+});
+
+// Add handler to clear results when new file is selected
+document.getElementById('verifyFile').addEventListener('change', function() {
+    document.getElementById('verifyResult').innerHTML = '';
+});
+
+// Add this after your existing JavaScript
+// Message persistence handling
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved message if exists
+    const savedMessage = localStorage.getItem('savedMessage');
+    if (savedMessage) {
+        document.getElementById('message').value = savedMessage;
+    }
+
+    // Save message button handler
+    document.getElementById('saveMessageBtn').addEventListener('click', function() {
+        const message = document.getElementById('message').value;
+        localStorage.setItem('savedMessage', message);
+        
+        // Show temporary success indicator
+        this.innerHTML = '<i class="fas fa-check"></i> Saved!';
+        setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-save"></i> Save';
+        }, 2000);
+    });
+});
+
+// Replace the Location service handling section with this:
+let userLocation = null;
+
+function getAddressFromCoordinates(latitude, longitude) {
+    return new Promise((resolve, reject) => {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+            .then(response => response.json())
+            .then(data => {
+                resolve(data.display_name);
+            })
+            .catch(error => {
+                reject(error);
+            });
+    });
+}
+
+function enableLocationService() {
+    const locationState = document.getElementById('locationState');
+    const toggleBtn = document.getElementById('toggleLocation');
+    
+    if (!navigator.geolocation) {
+        locationState.textContent = 'Not Available';
+        locationState.classList.add('text-danger');
+        return;
+    }
+
+    async function success(position) {
+        try {
+            const address = await getAddressFromCoordinates(
+                position.coords.latitude, 
+                position.coords.longitude
+            );
+            userLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                address: address
+            };
+            locationState.textContent = 'Enabled';
+            locationState.classList.remove('text-danger');
+            locationState.classList.add('text-success');
+            toggleBtn.classList.remove('btn-outline-danger');
+            toggleBtn.classList.add('btn-outline-success');
+        } catch (error) {
+            console.error('Error getting address:', error);
+            error();
+        }
+    }
+
+    function error() {
+        locationState.textContent = 'Disabled';
+        locationState.classList.remove('text-success');
+        locationState.classList.add('text-danger');
+        toggleBtn.classList.remove('btn-outline-success');
+        toggleBtn.classList.add('btn-outline-danger');
+        userLocation = null;
+    }
+
+    navigator.geolocation.getCurrentPosition(success, error);
+}
+
+// Initialize location state as disabled
+document.addEventListener('DOMContentLoaded', function() {
+    const locationState = document.getElementById('locationState');
+    const toggleBtn = document.getElementById('toggleLocation');
+    
+    locationState.textContent = 'Disabled';
+    locationState.classList.add('text-danger');
+    toggleBtn.classList.add('btn-outline-danger');
+});
+
+// Toggle button handler
+document.getElementById('toggleLocation').addEventListener('click', function() {
+    const locationState = document.getElementById('locationState');
+    
+    if (userLocation) {
+        // Disable location
+        userLocation = null;
+        locationState.textContent = 'Disabled';
+        locationState.classList.remove('text-success');
+        locationState.classList.add('text-danger');
+        this.classList.remove('btn-outline-success');
+        this.classList.add('btn-outline-danger');
+    } else {
+        // Enable location
+        enableLocationService();
+    }
+});
+
+// Modify the sign document handler to not require location
+const originalSignHandler = document.getElementById('userSignForm').onsubmit;
+document.getElementById('userSignForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const file = document.getElementById('fileUpload').files[0];
+    const messageInput = document.getElementById('message');
+    const signBtn = document.getElementById('signBtn');
+
+    if (!file || !messageInput.value.trim()) {
+        alert('Please select a file and enter a message');
+        return;
+    }
+
+    // Get current date and time
+    const now = new Date();
+    const dateString = now.toLocaleDateString();
+    const timeString = now.toLocaleTimeString();
+
+    // Add location only if enabled
+    const originalMessage = messageInput.value;
+    const fullMessage = userLocation ? 
+        `${originalMessage}\n\n[Date: ${dateString}] [Time: ${timeString}] [Location: ${userLocation.address}]` :
+        `${originalMessage}\n\n[Date: ${dateString}] [Time: ${timeString}]`;
+
+    // Rest of your signing code...
+});
+
+// Add this to your file input change handler
+document.getElementById('fileUpload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    // Clear previous sign result message
+    document.getElementById('signResult').innerHTML = '';
+    
+    if (file) {
+        // Check if it's an image file
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('filePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // Show error for non-image files
+            alert('Please select an image file (JPG, JPEG, PNG)');
+            this.value = '';
+            document.getElementById('filePreview').style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock %}
