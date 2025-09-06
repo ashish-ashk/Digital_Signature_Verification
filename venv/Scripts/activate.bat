@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=D:\OLD_Digital_Signature_verification_system\venv
+set VIRTUAL_ENV=C:\Users\Ashish\Desktop\Digital_Signature_Verification\venv
 
 if not defined PROMPT set PROMPT=$P$G
 
