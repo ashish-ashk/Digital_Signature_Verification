@@ -14,31 +14,23 @@ Open the VS Code and run the following commands step by step in terminal:-
 git clone https://github.com/ashish-ashk/Digital_Signature_Verification
 cd Digital_Signature_Verification
 ________________________________________
-2. Set Up a Virtual Environment
-python -m venv venv
-# Activate the environment:
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-________________________________________
-3. Install Dependencies
+2. Install Dependencies
 pip install -r requirements.txt
 ________________________________________
-4. Apply Database Migrations
+3. Apply Database Migrations
 python manage.py migrate
 ________________________________________
-5. (Optional) Create a Superuser for Django Admin
+4. (Optional) Create a Superuser for Django Admin
 python manage.py createsuperuser
 ________________________________________
-6. Run the Development Server
+5. Run the Development Server
 python manage.py runserver
 ________________________________________
-7. Access the Application
+6. Access the Application
 Open your browser and go to:
 http://127.0.0.1:8000/digital_signatures/user/
 ________________________________________
-8. Using the Application
+7. Using the Application
 Generate Key Pair
 •	Click Generate Key Pair to create a new ECDSA key pair.
 •	Copy/save the private and public keys as needed.
@@ -57,10 +49,10 @@ Forge Document (For Demo/Testing)
 •	Use the Forge Sign Document button to open the forge editor.
 •	Edit the signature data and confirm to generate a forged signed file.
 ________________________________________
-9. Django Admin (Optional)
+8. Django Admin (Optional)
 •	Visit http://127.0.0.1:8000/admin/ and log in with your superuser credentials to manage keys, logs, and users.
 ________________________________________
-10. Notes
+9. Notes
 •	The project uses ECDSA (secp256k1) for digital signatures.
 •	Watermarks and geolocation features are available for signed documents.
 •	All cryptographic operations are handled securely on the backend.
@@ -74,4 +66,5 @@ License
 This project is for educational and demonstration purposes.
 ________________________________________
 Enjoy using your Digital Signature Verification System!
+
 
